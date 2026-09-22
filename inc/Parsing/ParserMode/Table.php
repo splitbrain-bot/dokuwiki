@@ -29,6 +29,7 @@ class Table extends AbstractMode
     public function preConnect()
     {
         $this->registry->registerBlockEolMode('table');
+        $this->registry->registerRowBoundedMode('table');
     }
 
     /** @inheritdoc */

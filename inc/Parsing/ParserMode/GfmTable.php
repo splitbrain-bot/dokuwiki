@@ -66,6 +66,7 @@ class GfmTable extends AbstractMode
     public function preConnect()
     {
         $this->registry->registerBlockEolMode('gfm_table');
+        $this->registry->registerRowBoundedMode('gfm_table');
     }
 
     /**

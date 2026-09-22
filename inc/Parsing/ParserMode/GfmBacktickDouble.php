@@ -42,9 +42,12 @@ class GfmBacktickDouble extends GfmBacktickSingle
      * another, so not part of a run-of-two) instead of the parent's
      * backtick runs — such a stray backtick cannot form a valid n=2
      * closer. Deterministic and possessive like the parent's body.
+     *
+     * @inheritdoc
      */
-    protected function getBodyPattern(): string
+    protected function getBodyPattern(bool $multiline): string
     {
-        return '(?:[^`\n]++|' . self::NOT_AT_PARA_BREAK . '\n|`(?!`))++';
+        $newline = $multiline ? '|' . self::NOT_AT_PARA_BREAK . '\n' : '';
+        return '(?:[^`\n]++' . $newline . '|`(?!`))++';
     }
 }

@@ -98,6 +98,9 @@ class ModeRegistry
     /** @var string[] Modes that handle their own line endings (skip EOL connection) */
     protected array $blockEolModes = [];
 
+    /** @var string[] Modes whose content is bounded by a single line (table rows) */
+    protected array $rowBoundedModes = [];
+
     /** @var string the syntax flavour this parse runs under (dw, md, dw+md, md+dw) */
     protected string $syntax;
 
@@ -188,6 +191,32 @@ class ModeRegistry
     public function getBlockEolModes(): array
     {
         return $this->blockEolModes;
+    }
+
+    /**
+     * Register a mode whose content is bounded by a single line.
+     *
+     * Table modes register here: each row is its own block, so a nested
+     * inline mode must not pair an opening delimiter in one row with a
+     * closing delimiter in the next.
+     *
+     * @param string $mode The mode name
+     * @return void
+     */
+    public function registerRowBoundedMode(string $mode): void
+    {
+        $this->rowBoundedModes[] = $mode;
+    }
+
+    /**
+     * Whether the given mode bounds its content to a single line.
+     *
+     * @param string $mode The mode name
+     * @return bool
+     */
+    public function isRowBounded(string $mode): bool
+    {
+        return in_array($mode, $this->rowBoundedModes);
     }
 
     /**

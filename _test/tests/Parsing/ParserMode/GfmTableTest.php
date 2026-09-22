@@ -2,6 +2,8 @@
 
 namespace dokuwiki\test\Parsing\ParserMode;
 
+use dokuwiki\Parsing\ParserMode\GfmBacktickDouble;
+use dokuwiki\Parsing\ParserMode\GfmBacktickSingle;
 use dokuwiki\Parsing\ParserMode\GfmTable;
 
 /**
@@ -282,6 +284,58 @@ class GfmTableTest extends ParserTestBase
             ['tablerow_close', []],
             ['tablethead_close', []],
             ['table_close', [28]],
+            ['document_end', []],
+        ];
+        $this->assertCalls($expected, $this->H->calls);
+    }
+
+    /**
+     * A row is its own block, so an unpaired code-span delimiter stays
+     * literal instead of pairing with the delimiter in the next row.
+     */
+    public function testCodeSpanDoesNotCrossRows()
+    {
+        $this->P->addMode('gfm_table', new GfmTable());
+        $this->P->addMode('gfm_backtick_single', new GfmBacktickSingle());
+        $this->P->addMode('gfm_backtick_double', new GfmBacktickDouble());
+        $this->P->parse("| abc | def |\n| --- | --- |\n| `x` | `` |\n| `y` | `` |");
+
+        $expected = [
+            ['document_start', []],
+            ['table_open', [2, 3, 1]],
+            ['tablethead_open', []],
+            ['tablerow_open', []],
+            ['tableheader_open', [1, null, 1]],
+            ['cdata', ['abc']],
+            ['tableheader_close', []],
+            ['tableheader_open', [1, null, 1]],
+            ['cdata', ['def']],
+            ['tableheader_close', []],
+            ['tablerow_close', []],
+            ['tablethead_close', []],
+            ['tabletbody_open', []],
+            ['tablerow_open', []],
+            ['tablecell_open', [1, null, 1]],
+            ['monospace_open', []],
+            ['unformatted', ['x']],
+            ['monospace_close', []],
+            ['tablecell_close', []],
+            ['tablecell_open', [1, null, 1]],
+            ['cdata', ['``']],
+            ['tablecell_close', []],
+            ['tablerow_close', []],
+            ['tablerow_open', []],
+            ['tablecell_open', [1, null, 1]],
+            ['monospace_open', []],
+            ['unformatted', ['y']],
+            ['monospace_close', []],
+            ['tablecell_close', []],
+            ['tablecell_open', [1, null, 1]],
+            ['cdata', ['``']],
+            ['tablecell_close', []],
+            ['tablerow_close', []],
+            ['tabletbody_close', []],
+            ['table_close', [54]],
             ['document_end', []],
         ];
         $this->assertCalls($expected, $this->H->calls);

@@ -72,10 +72,13 @@ class GfmBacktickSingle extends AbstractMode
      * quantifiers are possessive, so a scan over the body never
      * backtracks: it stops at the first lone backtick (or fails at the
      * paragraph break) without accumulating backtracking state.
+     *
+     * @param bool $multiline whether the body may span lines
      */
-    protected function getBodyPattern(): string
+    protected function getBodyPattern(bool $multiline): string
     {
-        return '(?:[^`\n]++|' . self::NOT_AT_PARA_BREAK . '\n|``++)++';
+        $newline = $multiline ? '|' . self::NOT_AT_PARA_BREAK . '\n' : '';
+        return '(?:[^`\n]++' . $newline . '|``++)++';
     }
 
     /**
@@ -84,11 +87,13 @@ class GfmBacktickSingle extends AbstractMode
      * lone backtick ahead is always a valid closer, so at most one scan
      * per paragraph can fail — which keeps it linear without the memoized
      * closer machinery of Lexer::addCloserPattern().
+     *
+     * @param bool $multiline whether the span may span lines
      */
-    protected function getEntryPattern(): string
+    protected function getEntryPattern(bool $multiline): string
     {
         return $this->getDelimiterPattern()
-            . '(?=' . $this->getBodyPattern() . $this->getDelimiterPattern() . ')';
+            . '(?=' . $this->getBodyPattern($multiline) . $this->getDelimiterPattern() . ')';
     }
 
     /** Exit pattern: the same delimiter that opened the span. */
@@ -97,11 +102,17 @@ class GfmBacktickSingle extends AbstractMode
         return $this->getDelimiterPattern();
     }
 
-    /** @inheritdoc */
+    /**
+     * Table rows are their own blocks, so a span opened in a row must find
+     * its closer in the same row. Everywhere else a span may run to the end
+     * of the paragraph.
+     *
+     * @inheritdoc
+     */
     public function connectTo($mode)
     {
         $this->Lexer->addEntryPattern(
-            $this->getEntryPattern(),
+            $this->getEntryPattern(!$this->registry->isRowBounded($mode)),
             $mode,
             $this->getModeName()
         );
